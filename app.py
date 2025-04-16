@@ -40,30 +40,24 @@ def download_instagram_reel(insta_url):
     try:
         headers = {
             "User-Agent": "Mozilla/5.0",
-            "Referer": "https://snapinsta.app/"
+            "X-Requested-With": "XMLHttpRequest",
+            "Content-Type": "application/x-www-form-urlencoded"
         }
         session = requests.Session()
         response = session.post(
-            "https://snapinsta.app/action.php",
-            data={"url": insta_url, "submit": ""},
+            "https://saveig.app/api/ajaxSearch",
             headers=headers,
+            data={"q": insta_url},
             timeout=10
         )
 
-        # Debug-Zeile: Zeigt Anfang der HTML-Antwort in den Render Logs
-        print(response.text[:500])
+        json_data = response.json()
 
-        soup = BeautifulSoup(response.text, "html.parser")
-
-        # Versuch 1: Direktes Video-Tag mit mp4-Link
-        video_tag = soup.find("video")
-        if video_tag and video_tag.get("src"):
-            return video_tag["src"]
-
-        # Versuch 2: Alternativer a-Tag
-        link_tag = soup.find("a", href=True)
-        if link_tag and "mp4" in link_tag["href"]:
-            return link_tag["href"]
+        if "medias" in json_data and len(json_data["medias"]) > 0:
+            # Nimm das erste gefundene Video
+            video_url = json_data["medias"][0].get("url")
+            if video_url:
+                return video_url
 
         return None
     except Exception as e:
