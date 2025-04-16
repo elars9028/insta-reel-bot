@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: insta-reel-bot
+    env: python
+    buildCommand: ""
+    startCommand: gunicorn app:app
+    envVars:
+      - key: TELEGRAM_TOKEN
+        sync: false
