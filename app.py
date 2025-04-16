@@ -31,17 +31,31 @@ def webhook():
 
 def download_instagram_reel(insta_url):
     try:
-        headers = {"User-Agent": "Mozilla/5.0"}
+        headers = {
+            "User-Agent": "Mozilla/5.0",
+            "Referer": "https://snapinsta.app/"
+        }
         session = requests.Session()
-        response = session.post("https://snapinsta.app/action.php", data={"url": insta_url}, headers=headers)
+        response = session.post(
+            "https://snapinsta.app/action.php",
+            data={"url": insta_url, "submit": ""},
+            headers=headers,
+            timeout=10
+        )
 
         soup = BeautifulSoup(response.text, "html.parser")
-        video_tag = soup.find("a", {"class": "abutton"})
 
-        if video_tag:
-            return video_tag["href"]
-        else:
-            return None
+        # Versuch 1: Direktes Video-Tag mit mp4-Link
+        video_tag = soup.find("video")
+        if video_tag and video_tag.get("src"):
+            return video_tag["src"]
+
+        # Versuch 2: Alternativer a-Tag
+        link_tag = soup.find("a", href=True)
+        if link_tag and "mp4" in link_tag["href"]:
+            return link_tag["href"]
+
+        return None
     except Exception as e:
         print("Fehler beim Download:", e)
         return None
