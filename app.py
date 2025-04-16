@@ -2,6 +2,7 @@ from flask import Flask, request
 import requests
 import os
 from bs4 import BeautifulSoup
+from urllib.parse import urlparse, urlunparse
 
 app = Flask(__name__)
 
@@ -19,7 +20,8 @@ def webhook():
         if "instagram.com/reel/" in user_message:
             send_message(chat_id, "📥 Lade dein Reel herunter, einen Moment...")
 
-            video_url = download_instagram_reel(user_message)
+            cleaned_url = clean_url(user_message)
+            video_url = download_instagram_reel(cleaned_url)
             if video_url:
                 send_video(chat_id, video_url)
             else:
@@ -28,6 +30,11 @@ def webhook():
             send_message(chat_id, f"Du hast mir geschickt: {user_message}")
 
     return "OK", 200
+
+def clean_url(insta_url):
+    parsed = urlparse(insta_url)
+    clean = parsed._replace(query="")  # Entfernt ?igshid=... oder andere Query-Parameter
+    return urlunparse(clean)
 
 def download_instagram_reel(insta_url):
     try:
@@ -42,6 +49,9 @@ def download_instagram_reel(insta_url):
             headers=headers,
             timeout=10
         )
+
+        # Debug-Zeile: Zeigt Anfang der HTML-Antwort in den Render Logs
+        print(response.text[:500])
 
         soup = BeautifulSoup(response.text, "html.parser")
 
